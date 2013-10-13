@@ -1,0 +1,15 @@
+{
+  "name":              "phenx/svnclient",
+  "description":       "SVN Client written in PHP, uses SVN executables",
+  "minimum-stability": "stable",
+  "authors":           [
+    {
+      "name":  "Fabien Ménager",
+      "email": "fabien.menager@gmail.com"
+    }
+  ],
+  "require": {
+    "symfony/console": "2.3.x-dev",
+    "symfony/class-loader": "2.3.x-dev"
+  }
+}
