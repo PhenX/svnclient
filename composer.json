@@ -1,6 +1,7 @@
 {
   "name":              "phenx/svnclient",
   "description":       "SVN Client written in PHP, uses SVN executables",
+  "license": "MIT",
   "minimum-stability": "stable",
   "authors":           [
     {
