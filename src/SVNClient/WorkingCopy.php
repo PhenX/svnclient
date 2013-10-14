@@ -14,91 +14,39 @@ class WorkingCopy {
   /** @var string */
   private $path;
 
-  /** @var resource */
-  private $process;
-
   /** @var string */
   private $url;
 
   /** @var int */
   private $revision;
 
-  /** @var int */
-  private $repository_revision;
-
-  /** @var string */
-  private $root;
-
-  /** @var string */
-  private $uuid;
+  /** @var Repository */
+  protected $repository;
 
   function __construct($path) {
     if (!is_dir($path)) {
-      throw new \Exception("'$path' does not exist");
+      throw new Exception("'$path' does not exist");
     }
 
     $this->path = $path;
 
     $xml = $this->info();
 
-    $dom = simplexml_load_string($xml);
-    $entry = $dom->entry;
+    $data = Util::parseXML($xml);
+    $this->url = (string)$data->url;
+    $this->revision = (int)$data->commit->attributes()->revision;
 
-    $this->url = (string)$entry->url;
-    $this->revision = (int)$entry->commit->attributes()->revision;
-    $this->repository_revision = (int)$entry->attributes()->revision;
-    $this->root = (string)$entry->repository->root;
-    $this->uuid = (string)$entry->repository->uuid;
-  }
-
-  private function exec($cmd, $arguments = array(), $options = array()) {
-    $arguments = array_map("escapeshellarg", $arguments);
-
-    $opts = array(
-      0 => array("pipe", "r"), // stdin
-      1 => array("pipe", "w"), // stdout
-      2 => array("pipe", "w"), // stderr
-    );
-
-    $new_options = array();
-    foreach ($options as $key => $value) {
-      $new_options[] = preg_replace("/[^-\w]/", "", $key);
-
-      if ($value !== true) {
-        $new_options[] = escapeshellarg($value);
-      }
-    }
-
-    $cmdline = "svn $cmd ".implode(" ", $arguments)." ".implode(" ", $new_options);
-
-    $pipes = array();
-    $this->process = proc_open($cmdline, $opts, $pipes, $this->path);
-
-    if (is_resource($this->process)) {
-      $err = stream_get_contents($pipes[2]);
-      fclose($pipes[2]);
-      if ($err) {
-        throw new \Exception($err);
-      }
-
-      //fwrite($pipes[0], 'Init OK');
-      fclose($pipes[0]);
-
-      $out = stream_get_contents($pipes[1]);
-      fclose($pipes[1]);
-      return $out;
-    }
-
-    return false;
+    $repo = $data->repository;
+    $this->repository = new Repository((string)$repo->root, (string)$repo->uuid);
   }
 
   // Get folders
   function getBranches(){
-
+    return $this->repository->getBranches();
   }
 
   function getTags(){
-
+    return $this->repository->getTags();
   }
 
   // Commands
@@ -127,7 +75,7 @@ class WorkingCopy {
       "--revision" => $revision,
     );
 
-    return $this->exec("update", $paths, $options);
+    return Util::exec("update", $paths, $options, $this->path);
   }
 
   function cleanup($path) {
@@ -147,19 +95,37 @@ class WorkingCopy {
       "--xml" => true,
     );
 
-    return $this->exec("info", array($file), $options);
+    return Util::exec("info", $file, $options, $this->path);
   }
 
   // Properties
-  function setProperty($path, $name, $value) {
+  function getProperty($path, $name) {
+    return Util::exec("propget", array($name, $path), array(), $this->path);
+  }
 
+  function setProperty($path, $name, $value) {
+    return Util::exec("propset", array($name, $value, $path), array(), $this->path);
   }
 
   function removeProperty($path, $name) {
-
+    return Util::exec("propdel", array($name, $path), array(), $this->path);
   }
 
   function listProperties($path) {
+    $options = array(
+      "--xml" => true,
+    );
 
+    $xml = Util::exec("proplist", $path, $options, $this->path);
+    $data = DOM::parse($xml);
+
+    $properties = $data->xpath("//property");
+
+    $list = array();
+    foreach ($properties as $prop) {
+      $list[$prop->getAttribute("name")] = trim($prop->textContent);
+    }
+
+    return $list;
   }
 } 

@@ -17,4 +17,5 @@ require "autoload.php";
 $application = new Application();
 $application->add(new Command\Init());
 $application->add(new Command\Update());
+$application->add(new Command\CustomCommand());
 $application->run();
