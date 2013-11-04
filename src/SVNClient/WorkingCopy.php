@@ -17,11 +17,47 @@ class WorkingCopy {
   /** @var string */
   private $url;
 
+  /**
+   * Get path
+   *
+   * @return string
+   */
+  public function getPath() {
+    return $this->path;
+  }
+
+  /**
+   * Get revision
+   *
+   * @return int
+   */
+  public function getRevision() {
+    return $this->revision;
+  }
+
+  /**
+   * Get URL
+   *
+   * @return string
+   */
+  public function getURL() {
+    return $this->url;
+  }
+
   /** @var int */
   private $revision;
 
   /** @var Repository */
   protected $repository;
+
+  /**
+   * Get SVN repository
+   *
+   * @return \SVNClient\Repository
+   */
+  public function getRepository() {
+    return $this->repository;
+  }
 
   function __construct($path) {
     if (!is_dir($path)) {
@@ -62,8 +98,8 @@ class WorkingCopy {
 
   }
 
-  function relocate($to) {
-
+  function sw($to) {
+    return Util::exec("switch", $to, array(), $this->path);
   }
 
   function commit($files, $message) {
@@ -113,7 +149,8 @@ class WorkingCopy {
 
   function listProperties($path) {
     $options = array(
-      "--xml" => true,
+      "--xml"     => true,
+      "--verbose" => true,
     );
 
     $xml = Util::exec("proplist", $path, $options, $this->path);

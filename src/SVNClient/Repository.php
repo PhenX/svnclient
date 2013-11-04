@@ -14,6 +14,24 @@ class Repository {
   /** @var string */
   private $url;
 
+  /**
+   * Get repository URL
+   *
+   * @return string
+   */
+  public function getURL() {
+    return $this->url;
+  }
+
+  /**
+   * Get UUID
+   *
+   * @return string
+   */
+  public function getUUID() {
+    return $this->uuid;
+  }
+
   /** @var string */
   private $uuid;
 
