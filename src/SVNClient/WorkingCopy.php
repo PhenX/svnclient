@@ -140,7 +140,24 @@ class WorkingCopy {
   }
 
   function setProperty($path, $name, $value) {
-    return Util::exec("propset", array($name, $value, $path), array(), $this->path);
+    $tempfile = tempnam("", "svn");
+    file_put_contents($tempfile, $value);
+
+    $options = array(
+      "-F" => $tempfile,
+    );
+
+    try {
+      $result = Util::exec("propset", array($name, $path), $options, $this->path);
+    }
+    catch (Exception $e) {
+      unlink($tempfile);
+      throw $e;
+    }
+
+    unlink($tempfile);
+
+    return $result;
   }
 
   function removeProperty($path, $name) {
